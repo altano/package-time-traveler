@@ -1,0 +1,14 @@
+{
+  "name": "package-time-traveler",
+  "version": "1.0.0",
+  "description": "Simulate an npm install on a specific day (for better re-use of npm packages preadating package-lock.json)",
+  "main": "index.js",
+  "bin": "index.js",
+  "author": "Alan Norbauer <altano@gmail.com>",
+  "license": "UNLICENSED",
+  "repository": "github:altano/package-time-traveler",
+  "dependencies": {
+    "pacote": "^11.0.1",
+    "tiny-async-pool": "^1.1.0"
+  }
+}
