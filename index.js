@@ -9,11 +9,9 @@ const [, , packageJsonPath, date] = process.argv;
 
 async function getDepManifest(dependency) {
   const [depName, depVersion] = dependency;
-
   try {
     const manifest = await pacote.manifest(`${depName}@${depVersion}`, {
       fullMetadata: true,
-      // preferOnline: true,
       before: new Date(date),
     });
     return manifest;
@@ -24,35 +22,31 @@ async function getDepManifest(dependency) {
   }
 }
 
-async function processDeps(dependencies) {
+async function getNewDeps(dependencies) {
   if (dependencies == null) {
-    return;
+    return {};
   }
   const deps = Object.entries(dependencies);
-  if (deps.length > 0) {
-    // console.log(deps);
-    const manifests = await asyncPool(5, deps, getDepManifest);
-    const versions = manifests.filter(Boolean).map(manifest => {
-      return `${manifest.name}@${manifest.version}`;
-    });
-    console.log(versions);
-  }
+  const manifests = await asyncPool(5, deps, getDepManifest);
+  const manifestEntries = manifests
+    .filter(Boolean)
+    .map(manifest => [manifest.name, manifest.version]);
+  return Object.fromEntries(manifestEntries);
 }
 
 async function main() {
   if (packageJsonPath == null || date == null) {
-    console.log(`
-Parse a package.json and list all the packages older than the given date.
-
+    console.log(`Parse a package.json and list all the packages older than the given date.
 Usage: ${name} </path/to/package.json> <date>
     `);
   } else {
     const packageString = await fs.promises.readFile(packageJsonPath);
     const pkg = JSON.parse(packageString);
-    console.log(`Dependencies:`);
-    await processDeps(pkg.dependencies);
-    console.log(`Dev Dependencies:`);
-    await processDeps(pkg.devDependencies);
+    const newDeps = {
+      dependencies: await getNewDeps(pkg.dependencies),
+      devDependencies: await getNewDeps(pkg.devDependencies),
+    };
+    console.log(JSON.stringify(newDeps, null, 2));
   }
 }
 
